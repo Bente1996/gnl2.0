@@ -5,85 +5,112 @@
 /*                                                          +:+               */
 /*   By: bede-kon <bede-kon@student.codam.nl>              +#+                */
 /*                                                        +#+                 */
-/*   Created: 2026/01/13 13:35:18 by bede-kon            #+#    #+#           */
-/*   Updated: 2026/01/13 13:51:34 by bede-kon            ########   odam.nl   */
+/*   Created: 2026/01/15 18:23:25 by bede-kon            #+#    #+#           */
+/*   Updated: 2026/01/16 22:44:16 by bede-kon            ########   odam.nl   */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
-#include <stddef.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include "get_next_line.h"
 
-char	*add_chars(char *buf, char *old_line, int i)
+char	*grab_until_nl(char *tmp)
 {
-	static char	*line;
-	int	j = 0;
+	char	*line;
+	size_t	line_len;
+	size_t	i;
 
-	while (buf[i] != '\n' && buf[i] != '\0')
-		i++;
-	while (old_line[j])
-		j++;
-	line = malloc(sizeof(char) * (j + i) + 1);
-	if (buf[i] == '\n')
-		line[i + j + 1] = '\n';
-	line += j;
-	j += i;
 	i = 0;
-	while (buf[i] != '\n' && buf[i] != '\0')
-	{
-		line[i] = buf[i];
-		i++;
-	}
-	if (line[i] != '\n')
-		line[i] = '\0';
-	line -= j;
+	line_len = strlen_char(tmp, '\n') + 1;
+	line = malloc(sizeof(char) * (line_len + 1));
+	if (!line)
+		return (NULL);
+	while (i < line_len)
+		line[i++] = *tmp++;
+	line[i] = '\0';
 	return (line);
 }
 
-size_t	line_len(char *line)
+char	*grab_after_nl(char *tmp)
 {
-	size_t	i = 0;
+	char	*buf;
+	size_t	buf_len;
+	size_t	tmp_len;
+	int	i;
 
-	while (line[i] != '\0' && line[i] != '\n')
-		i++;
-	return (i);
+	i = 0;
+	tmp_len = strlen_char(tmp, '\0');
+	buf_len = tmp_len - (strlen_char(tmp, '\n') + 1);
+	if (!buf_len)
+		return (NULL);
+	buf = malloc(sizeof(char) * (buf_len + 1));
+	if (!buf)
+		return (NULL);
+	buf[buf_len] = '\0';
+	while (buf_len--)
+		buf[buf_len] = tmp[--tmp_len];
+	return (buf);
+}
+
+char	*make_line(char **buf, char *line)
+{
+	char	*tmp;
+
+	tmp = gnl_strjoin(*buf, line);
+	if (!tmp)
+		return (NULL);
+	if (nl_found(tmp))
+	{
+		line = grab_until_nl(tmp); // knip bij eerste \n
+		*buf = grab_after_nl(tmp); // alles na eerste \n
+		free(tmp);
+	}
+	else
+	{
+		line = tmp;
+		*buf = gnl_calloc(sizeof(char), (BUFFER_SIZE + 1));
+		tmp = NULL; // niet free want line wijst naar tmp
+	}
+	return (line);
+}
+
+int	ensure_buf(char **buf)
+{
+	if (!*buf)
+		*buf = gnl_calloc(sizeof(char), (BUFFER_SIZE + 1));
+	if (!*buf)
+		return (1);
+	return (0);
 }
 
 char	*get_next_line(int fd)
 {
-	static char	buf[BUFFER_SIZE];
-	static char	*line;
-	ssize_t	bytes_read = 1;
-	size_t	end = 0;
-	static int	start_index = 0;
+	static char	*buf = NULL;
+	char	*line;
+	ssize_t	bytes;
 
-	while (bytes_read)
+	line = NULL;
+	if (ensure_buf(&buf))
+		return (NULL);
+	if (!*buf)
 	{
-		if (start_index == BUFFER_SIZE)
+		bytes = read(fd, buf, BUFFER_SIZE);
+		if (!bytes || bytes == -1)
 		{
-			bytes_read = read(fd, buf, BUFFER_SIZE);
-			start_index = 0;
+			free(buf);
+			return (NULL);
 		}
-		if (bytes_read == -1)
-			break ;
-		line = add_chars(buf, line, start_index);
-		end = line_len(line);
-		if (line[end])
-			return (line);
 	}
-	return (NULL);
-}
-
-#include <stdio.h>
-#include <fcntl.h>
-int	main()
-{
-	const int		fd = open("file.txt", O_RDONLY);
-	char			*line;
-
-	while (line)
-		line = get_next_line(fd);
-	close(fd);
-	return (0);
+	while (!nl_found(line) && *buf)
+	{
+		line = make_line(&buf, line);
+		if (!line)
+			return (NULL);
+		if (!nl_found(line))
+			bytes = read(fd, buf, BUFFER_SIZE);
+	}
+	return (line);
 }

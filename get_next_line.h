@@ -17,12 +17,19 @@
 #  include <limits.h>
 #  if BUFFER_SIZE > INT_MAX || BUFFER_SIZE < 0
 #   undef BUFFER_SIZE
-#   define BUFFER_SIZE 1
+#   define BUFFER_SIZE 4
 #  endif
 # else
-#  define BUFFER_SIZE 1
+#  define BUFFER_SIZE 4
 # endif
 
+#include <stddef.h>
+
 char	*get_next_line(int fd);
+
+size_t	strlen_char(char *str, char c);
+char	*gnl_strjoin(char *buf, char *line);
+int		nl_found(char *str);
+void	*gnl_calloc(size_t nmemb, size_t size);
 
 #endif
