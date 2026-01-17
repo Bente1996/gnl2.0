@@ -26,7 +26,6 @@
 #include <stddef.h>
 
 char	*get_next_line(int fd);
-
 size_t	strlen_char(char *str, char c);
 char	*gnl_strjoin(char *buf, char *line);
 int		nl_found(char *str);

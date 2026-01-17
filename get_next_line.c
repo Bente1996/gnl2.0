@@ -11,10 +11,8 @@
 /* ************************************************************************** */
 
 #include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
+//#include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include "get_next_line.h"
 
 char	*grab_until_nl(char *tmp)
@@ -39,11 +37,12 @@ char	*grab_after_nl(char *tmp)
 	char	*buf;
 	size_t	buf_len;
 	size_t	tmp_len;
-	int	i;
 
-	i = 0;
 	tmp_len = strlen_char(tmp, '\0');
-	buf_len = tmp_len - (strlen_char(tmp, '\n') + 1);
+	//if (tmp[tmp_len - 1] == '\n') // toegevoegd
+	//	buf_len = 0;
+	//else // toegevoegd
+		buf_len = tmp_len - (strlen_char(tmp, '\n') + 1);
 	if (!buf_len)
 		return (NULL);
 	buf = malloc(sizeof(char) * (buf_len + 1));
@@ -64,15 +63,20 @@ char	*make_line(char **buf, char *line)
 		return (NULL);
 	if (nl_found(tmp))
 	{
-		line = grab_until_nl(tmp); // knip bij eerste \n
-		*buf = grab_after_nl(tmp); // alles na eerste \n
+		line = grab_until_nl(tmp);
+		if (!line)
+		{
+			free(tmp);
+			*buf = NULL;
+			return (NULL);
+		}
+		*buf = grab_after_nl(tmp);
 		free(tmp);
 	}
 	else
 	{
 		line = tmp;
 		*buf = gnl_calloc(sizeof(char), (BUFFER_SIZE + 1));
-		tmp = NULL; // niet free want line wijst naar tmp
 	}
 	return (line);
 }
@@ -86,6 +90,8 @@ int	ensure_buf(char **buf)
 	return (0);
 }
 
+#include <stdio.h>
+
 char	*get_next_line(int fd)
 {
 	static char	*buf = NULL;
@@ -98,19 +104,39 @@ char	*get_next_line(int fd)
 	if (!*buf)
 	{
 		bytes = read(fd, buf, BUFFER_SIZE);
-		if (!bytes || bytes == -1)
+		if (bytes == -1 || !bytes)
 		{
-			free(buf);
+			free(buf); // toegevoegd
+			buf = NULL;
 			return (NULL);
 		}
 	}
-	while (!nl_found(line) && *buf)
+	while (!nl_found(line) && buf && *buf) //buf toegevoegd
 	{
 		line = make_line(&buf, line);
 		if (!line)
+		{
+			free(buf);
+			buf = NULL;
 			return (NULL);
+		}
 		if (!nl_found(line))
+		{
 			bytes = read(fd, buf, BUFFER_SIZE);
+			if (!bytes) // toegevoegd
+			{
+				free(buf);
+				buf = NULL;
+				break ;
+			}
+			if (bytes == -1) // toegevoegd
+			{
+				free(buf);
+				free(line);
+				buf = NULL;
+				return (NULL);
+			}
+		}
 	}
 	return (line);
 }
