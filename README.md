@@ -15,7 +15,7 @@ This makes it unavoidable to make use of a static variable to store the bytes th
 
 Instructions:
 
-This is how you compile the project: cc -Wall -Wextra -Werror -D BUFFER_SIZE=n <files>.c
+This is how you compile the project: cc -Wall -Wextra -Werror -D BUFFER_SIZE=n files.c
 
 
 Resources:
