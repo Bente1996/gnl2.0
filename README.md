@@ -2,6 +2,7 @@
 
 
 Description:
+
 The get_next_line project is about creating a function that reads a file, returning one line at a time on repeated function calls.
 
 I stored the characters read by calling read() in a static buffer so that the contents of the buffer would be stored in between calls. 
@@ -13,6 +14,7 @@ This makes it unavoidable to make use of a static variable to store the bytes th
 
 
 Instructions:
+
 This is how you compile the project: cc -Wall -Wextra -Werror -D BUFFER_SIZE=n <files>.c
 
 
@@ -23,4 +25,5 @@ Resources:
 
 
 Algorithm:
+
 I didn't use an algorithm because that seemed redundant.
