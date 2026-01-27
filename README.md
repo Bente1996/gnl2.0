@@ -7,7 +7,9 @@ The get_next_line project is about creating a function that reads a file, return
 
 I stored the characters read by calling read() in a static buffer so that the contents of the buffer would be stored in between calls. 
 This was necessary because depending on BUFFER_SIZE, the buffer could be filled with multiple and/or incomplete lines after reading in to it.
+
 To clarify:
+
 Read() doesn't allow you to jump back and forth in a file to start reading from there (after every read call an index moves to the last byte read).
 If you call the get_next_line function a second time, read() will continue where it left of:
 This makes it unavoidable to make use of a static variable to store the bytes that were previously read and not formed in to a complete line yet.
