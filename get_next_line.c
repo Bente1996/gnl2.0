@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include <unistd.h>
-//#include <stdio.h>
 #include <stdlib.h>
 #include "get_next_line.h"
 
@@ -39,10 +38,7 @@ char	*grab_after_nl(char *tmp)
 	size_t	tmp_len;
 
 	tmp_len = strlen_char(tmp, '\0');
-	//if (tmp[tmp_len - 1] == '\n') // toegevoegd
-	//	buf_len = 0;
-	//else // toegevoegd
-		buf_len = tmp_len - (strlen_char(tmp, '\n') + 1);
+	buf_len = tmp_len - (strlen_char(tmp, '\n') + 1);
 	if (!buf_len)
 		return (NULL);
 	buf = malloc(sizeof(char) * (buf_len + 1));
@@ -54,7 +50,7 @@ char	*grab_after_nl(char *tmp)
 	return (buf);
 }
 
-char	*make_line(char **buf, char *line)
+char	*add_buf_to_line(char **buf, char *line)
 {
 	char	*tmp;
 
@@ -81,22 +77,39 @@ char	*make_line(char **buf, char *line)
 	return (line);
 }
 
-int	ensure_buf(char **buf)
+char	*grow_line(int fd, char **buf, char *line)
 {
-	if (!*buf)
-		*buf = gnl_calloc(sizeof(char), (BUFFER_SIZE + 1));
-	if (!*buf)
-		return (1);
-	return (0);
-}
+	ssize_t	bytes;
 
-#include <stdio.h>
+	line = add_buf_to_line(buf, line);
+	if (!line)
+	{
+		free(*buf);
+		*buf = NULL;
+		return (NULL);
+	}
+	if (!nl_found(line))
+	{
+		bytes = read(fd, *buf, BUFFER_SIZE);
+		if (bytes <= 0)
+		{
+			free(*buf);
+			*buf = NULL;
+		}
+		if (bytes < 0)
+		{
+			free(line);
+			return (NULL);
+		}
+	}
+	return (line);
+}
 
 char	*get_next_line(int fd)
 {
-	static char	*buf = NULL;
-	char	*line;
-	ssize_t	bytes;
+	static char	*buf;
+	char		*line;
+	ssize_t		bytes;
 
 	line = NULL;
 	if (ensure_buf(&buf))
@@ -106,37 +119,16 @@ char	*get_next_line(int fd)
 		bytes = read(fd, buf, BUFFER_SIZE);
 		if (bytes == -1 || !bytes)
 		{
-			free(buf); // toegevoegd
-			buf = NULL;
-			return (NULL);
-		}
-	}
-	while (!nl_found(line) && buf && *buf) //buf toegevoegd
-	{
-		line = make_line(&buf, line);
-		if (!line)
-		{
 			free(buf);
 			buf = NULL;
 			return (NULL);
 		}
-		if (!nl_found(line))
-		{
-			bytes = read(fd, buf, BUFFER_SIZE);
-			if (!bytes) // toegevoegd
-			{
-				free(buf);
-				buf = NULL;
-				break ;
-			}
-			if (bytes == -1) // toegevoegd
-			{
-				free(buf);
-				free(line);
-				buf = NULL;
-				return (NULL);
-			}
-		}
+	}
+	while (!nl_found(line) && buf)
+	{
+		line = grow_line(fd, &buf, line);
+		if (!line)
+			return (NULL);
 	}
 	return (line);
 }

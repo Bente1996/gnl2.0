@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "get_next_line.h"
 
 size_t	strlen_char(char *str, char c)
 {
@@ -28,10 +29,10 @@ size_t	strlen_char(char *str, char c)
 char	*gnl_strjoin(char *buf, char *line)
 {
 	const size_t	tmp_len = strlen_char(buf, '\0') + strlen_char(line, '\0');
-	char	*tmp;
-	int	i;
-	int	line_i;
-	int	buf_i;
+	char			*tmp;
+	int				i;
+	int				line_i;
+	int				buf_i;
 
 	i = 0;
 	tmp = malloc(sizeof(char) * (tmp_len + 1));
@@ -56,7 +57,7 @@ int	nl_found(char *str)
 {
 	const char	nl = '\n';
 
-	while(str && *str)
+	while (str && *str)
 	{
 		if (*str == nl)
 			return (1);
@@ -83,4 +84,13 @@ void	*gnl_calloc(size_t nmemb, size_t size)
 			((char *)ptr)[i++] = 0;
 	}
 	return (ptr);
+}
+
+int	ensure_buf(char **buf)
+{
+	if (!*buf)
+		*buf = gnl_calloc(sizeof(char), (BUFFER_SIZE + 1));
+	if (!*buf)
+		return (1);
+	return (0);
 }
