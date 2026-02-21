@@ -26,7 +26,7 @@ cc -Wall -Wextra -Werror -D BUFFER_SIZE=[int] [C source files]
 # Resources:
 - Man 3 read.
 - No AI was used.
-- [MatsGPT](https://profile.intra.42.fr/users/mde-beer) (README: Algorithm, Formatting)
+- [MatsGPT](https://profile.intra.42.fr/users/mde-beer) (Project: rubber ducky; README: Algorithm, Formatting)
 
 
 # Algorithm:
