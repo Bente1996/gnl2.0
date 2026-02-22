@@ -23,7 +23,7 @@
 #  define BUFFER_SIZE 4
 # endif
 
-#include <stddef.h>
+# include <stddef.h>
 
 char	*get_next_line(int fd);
 size_t	strlen_char(char *str, char c);
